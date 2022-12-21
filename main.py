@@ -11,7 +11,7 @@ from custom_neural_net_creator.activation_functions import relu, relu_derivative
 from custom_neural_net_creator.loss_functions import mean_squared_error, mean_squared_error_derivative
 
 #Import configuration variables
-from config import epoch_increment, max_epoch, trials
+from config import epoch_increment, max_epoch, trials, learning_rate, verbosity, hidden_neurons
 
 #Import variables from data processing
 f = open('X_test.pckl', 'rb')
@@ -37,29 +37,56 @@ Y_test = np.array(Y_test)
 
 trial_data = [] #Store testing accuracies for each trial to save in csv
 
-#Create model
-model = Model()
+#Create accuracy metric
+def testing_accuracy(predictions):
+    global Y_test
 
-model.add(Dense(15,32))
-model.add(ActivationLayer(relu, relu_derivative))
-model.add(Dense(32,32))
-model.add(ActivationLayer(relu, relu_derivative))
-model.add(Dense(32,1))
-model.add(ActivationLayer(sigmoid, sigmoid_derivative))
+    total = len(predictions) #Get total amount of testcases in testing dataset
+    correct = 0 #Track how many many testcases the model accurately predicts
 
+    for i in range(total):
+        prediction = round(predictions[i][0][0]) #Round the prediction of the model to 0 or 1
+        if prediction == Y_test[i][0]: #Check to see if the prediction is equal to the actual data
+            correct += 1
 
-model.fit(X_train, Y_train, mean_squared_error, mean_squared_error_derivative,100,learning_rate=0.1,verbosity=3)
-predictions = model.predict(X_test)
+    accuracy_score = correct/total * 100 #Create a percent accuracy variable
+    return accuracy_score
 
-total = len(predictions)
-correct = 0
-incorrect = 0
+#Loop over the number of trials using range function
+for trial in range(trials):
+    print("Testing Trial " + str(trial + 1)) #Output current trail being tested
+    accuracies = [] #Keeps track of the accuracies for each epoch being recorded
+    current_epoch = 0 #Keeps track of current epoch number being tested
 
-for i in range(total):
-    prediction = round(predictions[i][0][0])
-    if prediction == Y_test[i][0]:
-        correct += 1
-    else:
-        incorrect += 1
-accuracy_score = correct/total * 100
-print("Percent Accuracy: " + str(accuracy_score))
+    #Create model
+    model = Model()
+
+    model.add(Dense(15,hidden_neurons)) #15 neurons in input layer to a variable containing the number of hidden neurons in the hidden layer
+    model.add(ActivationLayer(relu, relu_derivative)) #Use rectified linear unit as the activation function on the hidden layer
+    model.add(Dense(hidden_neurons,1)) #Add an output layer containing 1 neuron
+    model.add(ActivationLayer(sigmoid, sigmoid_derivative)) #Use sigmoid as activation function to scale output between 0 or 1
+
+    while current_epoch <= max_epoch: #Make sure that model is only being trained up to the max_epoch
+        #Train model on training data epoch_increment more times
+        model.fit(X_train, Y_train, mean_squared_error, mean_squared_error_derivative,epoch_increment,learning_rate=learning_rate,verbosity=verbosity)
+
+        #Get predictions on testing data and get accuracy
+        predictions = model.predict(X_test)
+        accuracy = testing_accuracy(predictions)
+
+        accuracies.append(accuracy) #Add accuracy to end of the accuracies array
+        current_epoch += epoch_increment #Add the epoch increment to the current epoch to be tested in next iteration
+
+    trial_data.append(accuracies) #Add the data for this current trial to the overall data
+
+#Output data in formatted csv
+
+#Create Columns
+columns = list(range(0,max_epoch+1,epoch_increment))
+columns = [str(x) + " hidden layer" if x == 1 else str(x) + " hidden layers" for x in columns]
+
+#Create Pandas Dataframe
+df = pd.DataFrame(trial_data, columns=columns)
+
+#Export to CSV
+df.to_csv("./trial_data.csv")
