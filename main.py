@@ -54,7 +54,7 @@ def testing_accuracy(predictions):
 
 #Loop over the number of trials using range function
 for trial in range(trials):
-    print("Testing Trial " + str(trial + 1)) #Output current trail being tested
+    print("Running Trial " + str(trial + 1)) #Output current trail being tested
     accuracies = [] #Keeps track of the accuracies for each epoch being recorded
     current_epoch = 0 #Keeps track of current epoch number being tested
 
@@ -63,7 +63,9 @@ for trial in range(trials):
 
     model.add(Dense(15,hidden_neurons)) #15 neurons in input layer to a variable containing the number of hidden neurons in the hidden layer
     model.add(ActivationLayer(relu, relu_derivative)) #Use rectified linear unit as the activation function on the hidden layer
-    model.add(Dense(hidden_neurons,1)) #Add an output layer containing 1 neuron
+    model.add(Dense(hidden_neurons,hidden_neurons)) #Add an output layer containing 1 neuron
+    model.add(ActivationLayer(relu, relu_derivative))
+    model.add(Dense(hidden_neurons,1))
     model.add(ActivationLayer(sigmoid, sigmoid_derivative)) #Use sigmoid as activation function to scale output between 0 or 1
 
     while current_epoch <= max_epoch: #Make sure that model is only being trained up to the max_epoch
@@ -83,10 +85,13 @@ for trial in range(trials):
 
 #Create Columns
 columns = list(range(0,max_epoch+1,epoch_increment))
-columns = [str(x) + " hidden layer" if x == 1 else str(x) + " hidden layers" for x in columns]
+columns = [str(i) + " epoch" if i == 1 else str(i) + " epochs" for i in columns]
+
+#Create Indexes
+indexes = [f"Trial #{i+1}" for i in range(trials)] 
 
 #Create Pandas Dataframe
-df = pd.DataFrame(trial_data, columns=columns)
+df = pd.DataFrame(trial_data, columns=columns, index=indexes)
 
 #Export to CSV
 df.to_csv("./trial_data.csv")
