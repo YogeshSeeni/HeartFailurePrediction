@@ -54,7 +54,7 @@ def testing_accuracy(predictions):
 
 #Loop over the number of trials using range function
 for trial in range(trials):
-    print("Running Trial " + str(trial + 1)) #Output current trail being tested
+    print("Running Trial " + str(trial + 1)) #Output current trial being tested
     accuracies = [] #Keeps track of the accuracies for each epoch being recorded
     current_epoch = 0 #Keeps track of current epoch number being tested
 
