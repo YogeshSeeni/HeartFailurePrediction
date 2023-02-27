@@ -1,4 +1,4 @@
-trials = 32
+trials = 32000
 max_epoch = 10
 epoch_increment = 1 #Used to see if current epoch needs to be recorded
 learning_rate = 0.001
